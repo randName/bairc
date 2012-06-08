@@ -2,4 +2,15 @@ BAIRC
 
 An IRC client/bot made in bash. Extremely versatile, but also dangerous. Take care.
 
+> ./bairc irc_server [port]
+
 v0.8
+
+c/ - customizations folder
+f/ - important files that BAIRC will use
+bairc - main file. execute this
+server - server events
+actions - irc events
+privmsg - PM events ( includes CTCP )
+nickname - Nickname that BAIRC will use. Update ./f/nickserv_pw if Nickname is registered with NickServ
+
