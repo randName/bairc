@@ -1,0 +1,44 @@
+if [ "${1:1:1}" == $ctcp ]; then
+	case ${w1//$ctcp/''} in
+		CLIENTINFO) ctcp_reply "CLIENTINFO CLIENTINFO VERSION ERRMSG PING TIME" ;;
+		VERSION) ctcp_reply "VERSION BAIRC v2.$RANDOM" ;;
+		ERRMSG) ctcp_reply "ERRMSG ERRMSG :No error" ;;
+		PING) ctcp_reply "PING `date +%s`" ;;
+		TIME) ctcp_reply "TIME `date`" ;;
+		DCC)
+			case $2 in
+				SEND) echo "File $3 at $4:$5" ;;
+				# CHAT)
+					#if [ -e ./f/dcc_chat.lck ] && [ "$( cat ./f/dcc_chat.lck )" != "$4" ]; then
+					#	ctcp_reply "ERRMSG DCC currently in another CHAT"
+					#else
+					#	echo $4 > ./f/dcc_chat.lck
+					#	echo ${@:2}
+					#	( ./dcc ${@:3} )
+					#fi
+				#;;
+				*) ctcp_reply "ERRMSG DCC $2 unavailable" ;;
+			esac
+		;;
+		*) ctcp_reply "ERRMSG ${w1//$ctcp/} :Unknown Query" ;;
+	esac
+else
+	case ${w1} in
+		auth) [ "$extnick" == "$( cat ./f/auth )" ] && ( : > ./f/auth ) || ( [ "$2" = "$( cat ./f/nickserv_pw )" ] && echo -n $extnick > ./f/auth )  ;;
+		help)
+			case $2 in
+				kill) helptext="kill [r]: (needs auth) Kill BAIRC ( -r for restart )" ;;
+				nick) helptext="nick nickname: (needs auth) Change Nickname" ;;
+				*) helptext="$2 : no such command" ;;
+			esac
+			[ -z "$2" ] && helptext="Available commands: join part kill nick whoami"
+			privmsg $extnick "$helptext"
+		;;
+		part) [ -n "$2" ] && irc "PART $2" || irc "JOIN 0" ;;
+		join) [ -n "$2" ] && irc "JOIN $2" || irc "$( sed 's/^/JOIN /' ./c/mychanlist )" ;;
+		kill) [ "$extnick" == "$( cat ./f/auth )" ] && ( ( [ "$2" == "r" ] && touch ./killed ) ; irc "QUIT :killed" ) ;;
+		nick) [ "$extnick" == "$( cat ./f/auth )" ] && [ -n "$2" ] && ( irc "NICK $2" ; echo -n $2 > nickname ) ;;
+		whoami) [ "$extnick" == "$( cat ./f/auth )" ] && privmsg $extnick root || privmsg $extnick $extnick ;;
+		*) echo "[$extnick] ${1:1} ${@:2}" ;;
+	esac
+fi

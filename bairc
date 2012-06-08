@@ -1,0 +1,52 @@
+#!/bin/bash -f
+
+cd $( dirname $BASH_SOURCE )
+
+ctcp=`echo -en '\x01'`
+bold=`echo -en '\x02'`
+undl=`echo -en '\x1F'`
+colr=`echo -en '\x03'` # FFF 000 008 080 F00 844 80F 880 FF0 0F0 088 0FF 00F F0F 888 CCC
+
+# FUNCTIONS
+
+irc(){ echo "$@" >&4 ; }
+log(){ echo ${@:2} >> $1 ; }
+
+privmsg(){ irc "PRIVMSG $1 :${@:2}" ; }
+ctcp_reply(){ irc "NOTICE $extnick :${ctcp}$@${ctcp}" ; }
+
+# server reply handler
+catch_reply()
+{
+        [ -e ./f/server_reply ] && echo $'\n'$'\n'$'\n' >> ./f/server_reply
+        echo ${@:1} >> ./f/server_reply
+}
+
+irc_parse ()
+{
+	case $1 in
+		PING) irc "PONG $2" ;;
+		ERROR)  exec 4<&-
+			[ -e ./killed ] && rm ./killed && exit 0
+			exec $BASH_SOURCE $SERVER $PORT
+		;;
+		*)
+			ep=$( expr index "$1" '!' )
+			if [ $ep -ne 0 ]; then
+				extnick=${1:1:(( ep-=2 ))}
+				shift && ( . ./actions ) &
+			else
+				reply=$2
+				shift 3 && ( . ./server )
+			fi
+		;;
+	esac
+}
+
+[ $# -lt 1 ] && echo "Usage: $BASH_SOURCE server [port]" && exit 1
+SERVER=$1; PORT=${2:-6667}
+
+exec 4<> /dev/tcp/$SERVER/$PORT
+
+irc "USER plrin 0 \* :realName"$'\n'"NICK $( cat ./nickname )"
+while read a; do irc_parse $( tr -d '\n\r' <<< "$a" ) ; done <&4

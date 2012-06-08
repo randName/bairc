@@ -1,0 +1,32 @@
+chan=${2,,}
+
+case $1 in
+#	NICK) : ;;
+#	KICK) : ;;
+	JOIN) chan=$( tr A-Z a-z <<< "${2:1}" ) ;;
+#	PART) : ;;
+	MODE) : ;;
+#	TOPIC) : ;;
+	INVITE) irc "JOIN $3" ;;
+	NOTICE)
+		if [ "$2" == $( cat ./nickname ) ]; then
+			[ "$extnick" == "NickServ" ] && [ "${*:4:3}" == 'nickname is registered' ] && privmsg NickServ "IDENTIFY $( cat ./f/nickserv_pw )"
+			# echo "Notice: ${3:1} ${@:4}"
+		fi
+	;;
+	PRIVMSG)
+		if [ "$2" == $( cat ./nickname ) ]; then
+			shift 2; w1=${1:1}; ( . ./privmsg )
+		else
+			ot="${3:1} ${@:4}"
+			for filter in $( sed '/#/d' ./f/ignored ); do [[ "$ot" =~ $filter ]] && ot="" && break ; done
+			if [ -n "$ot" ]; then
+				out="<${extnick}> $ot"
+				[[ "$ot" =~ ${ctcp}ACTION ]] && out="${extnick}${ot:7}"
+			fi
+		fi
+	;;
+	*) echo $@ ;;
+esac
+
+. ./c/mychans
