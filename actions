@@ -1,16 +1,23 @@
 chan=${2,,}
 
 case $1 in
-#	NICK) : ;;
-#	KICK) : ;;
+	NICK)
+		[ -e ./f/auth ] && [ "$extnick" == "$( cat ./f/auth )" ] && echo -n "${2:1}" > ./f/auth
+	#	[ "${2:1:5}" != "Guest" ] && 
+	#	( [ $( grep ${2:1} <<< "$extnick" ) ] || [ $( grep $extnick <<< "${2:1}" ) ] ) || log $chan "$extnick -> ${2:1}"
+	;;
+	KICK)
+		[ "${extnick:0:5}" != "Guest" -a "${*:4:1}" != ':Banned:' ] && log $chan "$3 was kicked from $chan by $extnick ${@:4}"
+	;;
 	JOIN) chan=$( tr A-Z a-z <<< "${2:1}" ) ;;
-#	PART) : ;;
+	QUIT) : ;;
+	PART) : ;;
 	MODE) : ;;
-#	TOPIC) : ;;
+	TOPIC) log $chan "$extnick changed topic: ${3:1} ${@:4}" ;;
 	INVITE) irc "JOIN $3" ;;
 	NOTICE)
 		if [ "$2" == $( cat ./nickname ) ]; then
-			[ "$extnick" == "NickServ" ] && [ "${*:4:3}" == 'nickname is registered' ] && privmsg NickServ "IDENTIFY $( cat ./f/nickserv_pw )"
+			[ "$extnick" == "NickServ" -a "${*:4:3}" == 'nickname is registered' ] && privmsg NickServ "IDENTIFY $( cat ./f/nickserv_pw )"
 			# echo "Notice: ${3:1} ${@:4}"
 		fi
 	;;
@@ -23,6 +30,8 @@ case $1 in
 			if [ -n "$ot" ]; then
 				out="<${extnick}> $ot"
 				[[ "$ot" =~ ${ctcp}ACTION ]] && out="${extnick}${ot:7}"
+				out=$( sed -e "s/$bold//g; s/$colr[0-9,]*//g; s/$undl//g; s/$ctcp//g" -e 's/[[:cntrl:]]//g' <<< "$out" )
+				[ -n "$out" ] && log $chan "$out"
 			fi
 		fi
 	;;

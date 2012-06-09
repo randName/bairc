@@ -1,0 +1,7 @@
+#!/bin/bash
+while [ true ]; do
+	sleep $(( $( date -d 2359 +%s ) - $( date +%s ) + 50 ))
+	for a in ./logs/#*; do
+		( until [ "$( date +%M%S )" == "0000" ]; do sleep 1; done && echo $'\n'" - $( date +%F ) -"$'\n' >> $a ) &
+	done
+done

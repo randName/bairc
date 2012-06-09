@@ -2,8 +2,8 @@ if [ "$1" == "NICK" ] || [ "$1" == "QUIT" ]; then
 	for a in $( ls nicks ); do
 		if [[ $( grep $extnick ./nicks/$a ) ]]; then
 			case $1 in
-				NICK) seds="s/$extnick/${2:1}/" ;;
-				QUIT) seds="/$extnick/d" ;;
+				NICK) log $a "$extnick -> ${2:1}"; seds="s/$extnick/${2:1}/" ;;
+				QUIT) log $a "<< $extnick ${2:1} ${@:3}"; seds="/$extnick/d" ;;
 			esac
 			sed -i "${seds}" ./nicks/$a
 		fi
@@ -29,22 +29,35 @@ case $1 in
 	;;
 	JOIN)
 		if [ "$extnick" == $( cat ./nickname ) ]; then
+			sleep $(( RANDOM%3 )) && while [ -e ./f/start_names ]; do sleep 1; done
 			echo -n $chan > ./f/start_names && irc "NAMES $chan"
 			until [ -e ./f/end_names ]; do sleep 1; done
 			sed -e 's/ /\n/g' -e 's/\(@\|%\|&\|+\)//g' ./f/names > ./nicks/$chan
-			rm ./f/start_names && rm ./f/end_names && rm ./f/names
+			rm ./f/end_names && rm ./f/names && rm ./f/start_names
 		else
-			wn=$undl$colr"4,8/!\\$undl "$undl$colr"1Warning$undl: "
+			wn="$undl${colr}4,8/!\\$undl $undl${colr}1Warning$undl: "
 			case $extnick in
+				trewdys) privmsg $chan "ウホッ イイ男" ;;
 				luminodrake) privmsg $chan $wn"Cow Detected" && ( sleep 1 && privmsg $chan moo ) & ;;
 			esac
 			chan_action $chan "welcomes $extnick with $( randline ./c/cookies ) cookies"
+			fifline="$( tail -n 15 ./logs/$chan )"
+			if [[ $( grep $extnick <<< "$fifline" ) ]]; then
+				lasline="$( grep -n $extnick <<< "fifline" | cut -d':' -f1 | tail -n 1 )"
+				[ "$lasline" -ne 15 ] && irc "$( tail -n $(( 15-lasline )) ./logs/$chan | sed -e "s/^/PRIVMSG $extnick :/" -e 's/$/\n/' )"
+			else
+				irc "$( sed -e "s/^/PRIVMSG $extnick :/" -e 's/$/\n/' <<< "$fifline" )"
+			fi
 			[[ $( grep $extnick ./nicks/$chan ) ]] || echo $extnick >> ./nicks/$chan
 		fi
+		log $chan "-> $extnick"
 	;;
-	PART) sed -i "/$extnick/d" ./nicks/$chan ;;
+	PART)
+		sed -i "/$extnick/d" ./nicks/$chan
+		log $chan "<- $extnick: ${3:1} ${@:4}"
+	;;
 	MODE) : ;;
-	TOPIC) : ;; # ($extnick) Topic: ${3:1} ${@:4} ;;
+	TOPIC) : ;;
 	PRIVMSG)
 		case ${3:1:1} in
 			!)

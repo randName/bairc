@@ -10,7 +10,7 @@ colr=`echo -en '\x03'` # FFF 000 008 080 F00 844 80F 880 FF0 0F0 088 0FF 00F F0F
 # FUNCTIONS
 
 irc(){ echo "$@" >&4 ; }
-log(){ echo ${@:2} >> $1 ; }
+log(){ [[ "$1" =~ \#* ]] && echo $( date +%R ) ${@:2} >> ./logs/$1 || echo ${@:2} >> $1 ; }
 
 privmsg(){ irc "PRIVMSG $1 :${@:2}" ; }
 ctcp_reply(){ irc "NOTICE $extnick :${ctcp}$@${ctcp}" ; }

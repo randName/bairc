@@ -36,7 +36,7 @@ else
 		;;
 		part) [ -n "$2" ] && irc "PART $2" || irc "JOIN 0" ;;
 		join) [ -n "$2" ] && irc "JOIN $2" || irc "$( sed 's/^/JOIN /' ./c/mychanlist )" ;;
-		kill) [ "$extnick" == "$( cat ./f/auth )" ] && ( ( [ "$2" == "r" ] && touch ./killed ) ; irc "QUIT :killed" ) ;;
+		kill) [ "$extnick" == "$( cat ./f/auth )" ] && ( ( [ "$2" == "r" ] || touch ./killed ) ; irc "QUIT :killed" ) ;;
 		nick) [ "$extnick" == "$( cat ./f/auth )" ] && [ -n "$2" ] && ( irc "NICK $2" ; echo -n $2 > nickname ) ;;
 		whoami) [ "$extnick" == "$( cat ./f/auth )" ] && privmsg $extnick root || privmsg $extnick $extnick ;;
 		*) echo "[$extnick] ${1:1} ${@:2}" ;;
