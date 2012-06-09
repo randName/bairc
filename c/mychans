@@ -43,7 +43,7 @@ case $1 in
 			chan_action $chan "welcomes $extnick with $( randline ./c/cookies ) cookies"
 			fifline="$( tail -n 15 ./logs/$chan )"
 			if [[ $( grep $extnick <<< "$fifline" ) ]]; then
-				lasline="$( grep -n $extnick <<< "fifline" | cut -d':' -f1 | tail -n 1 )"
+				lasline="$( grep -n $extnick <<< "$fifline" | cut -d':' -f1 | tail -n 1 )"
 				[ "$lasline" -ne 15 ] && irc "$( tail -n $(( 15-lasline )) ./logs/$chan | sed -e "s/^/PRIVMSG $extnick :/" -e 's/$/\n/' )"
 			else
 				irc "$( sed -e "s/^/PRIVMSG $extnick :/" -e 's/$/\n/' <<< "$fifline" )"
