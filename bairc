@@ -2,24 +2,32 @@
 
 cd $( dirname $BASH_SOURCE )
 
-ctcp=`echo -en '\x01'`
-bold=`echo -en '\x02'`
-undl=`echo -en '\x1F'`
-colr=`echo -en '\x03'` # FFF 000 008 080 F00 844 80F 880 FF0 0F0 088 0FF 00F F0F 888 CCC
+#ctcp=`echo -en '\x01'`
+#bold=`echo -en '\x02'`
+#undl=`echo -en '\x1F'`
+#colr=`echo -en '\x03'` # FFF 000 008 080 F00 844 80F 880 FF0 0F0 088 0FF 00F F0F 888 CCC
+
+#		    ctcp bold colr undl
+ctrl=( $( echo -en '\x01 \x02 \x03 \x1F' ) )
+# FFF 000 008 080 F00 844 80F 880 FF0 0F0 088 0FF 00F F0F 888 CCC
 
 # FUNCTIONS
 
 irc(){ echo "$@" >&4 ; }
 log(){ [[ "$1" =~ \#* ]] && echo $( date +%R ) ${@:2} >> ./logs/$1 || echo ${@:2} >> $1 ; }
 
-privmsg(){ irc "PRIVMSG $1 :${@:2}" ; }
-ctcp_reply(){ irc "NOTICE $extnick :${ctcp}$@${ctcp}" ; }
+#privmsg(){ irc "PRIVMSG $1 :${@:2}" ; }
+#ctcp_reply(){ irc "NOTICE $extnick :${ctcp}$@${ctcp}" ; }
+#chan_action(){ irc "PRIVMSG $1 :${ctcp}ACTION ${@:2}"$ctcp ; }
 
-# server reply handler
-catch_reply()
+msg()
 {
-        [ -e ./f/server_reply ] && echo $'\n'$'\n'$'\n' >> ./f/server_reply
-        echo ${@:1} >> ./f/server_reply
+	case $1 in
+	0) irc "PRIVMSG $2 :${@:3}" ;; # Chan MSG / PRIVMSG
+	1) irc "PRIVMSG $2 :${ctrl[0]}ACTION ${@:3}${ctrl[0]}" ;; # action msg
+	2) irc "NOTICE $2 :${@:3}" ;; # NOTICE
+	3) irc "NOTICE $2 :${ctrl[0]}${@:3}${ctrl[0]}" ;; # CTCP Reply
+	esac
 }
 
 irc_parse ()
@@ -44,9 +52,13 @@ irc_parse ()
 }
 
 [ $# -lt 1 ] && echo "Usage: $BASH_SOURCE server [port]" && exit 1
+
 SERVER=$1; PORT=${2:-6667}
 
 exec 4<> /dev/tcp/$SERVER/$PORT
+
+./date &
+trap 'kill $( cat ./date_PID ); rm ./date_PID' EXIT
 
 irc "USER plrin 0 \* :realName"$'\n'"NICK $( cat ./nickname )"
 while read a; do irc_parse $( tr -d '\n\r' <<< "$a" ) ; done <&4

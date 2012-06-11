@@ -17,7 +17,7 @@ case $1 in
 	INVITE) irc "JOIN $3" ;;
 	NOTICE)
 		if [ "$2" == $( cat ./nickname ) ]; then
-			[ "$extnick" == "NickServ" -a "${*:4:3}" == 'nickname is registered' ] && privmsg NickServ "IDENTIFY $( cat ./f/nickserv_pw )"
+			[ "$extnick" == "NickServ" -a "${*:4:3}" == 'nickname is registered' ] && msg 0 NickServ "IDENTIFY $( cat ./f/nickserv_pw )"
 			# echo "Notice: ${3:1} ${@:4}"
 		fi
 	;;
@@ -29,8 +29,8 @@ case $1 in
 			for filter in $( sed '/#/d' ./f/ignored ); do [[ "$ot" =~ $filter ]] && ot="" && break ; done
 			if [ -n "$ot" ]; then
 				out="<${extnick}> $ot"
-				[[ "$ot" =~ ${ctcp}ACTION ]] && out="${extnick}${ot:7}"
-				out=$( sed -e "s/$bold//g; s/$colr[0-9,]*//g; s/$undl//g; s/$ctcp//g" -e 's/[[:cntrl:]]//g' <<< "$out" )
+				[[ "$ot" =~ ${ctrl[0]}ACTION ]] && out="${extnick}${ot:7}"
+				out=$( sed -e "s/${ctrl[0]}//g; s/${ctrl[1]}//g; s/${ctrl[2]}[0-9,]*//g; s/${ctrl[3]}//g;" -e 's/[[:cntrl:]]//g' <<< "$out" )
 				[ -n "$out" ] && log $chan "$out"
 			fi
 		fi

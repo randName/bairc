@@ -13,12 +13,11 @@ fi
 
 [[ $( grep $chan ./c/mychanlist ) ]] || exit
 
-chan_action(){ privmsg $1 $ctcp"ACTION ${@:2}"$ctcp ; }
 randline(){ sed -n $((RANDOM%$(wc -l <$1)+1))p $1 ; }
 randnick()
 {
-	rn=$1
-	while [ $rn == $1 ] || [ $rn == $( cat ./nickname ) ]; do rn=$( randline ./nicks/$1 ); done
+	rn=$( cat ./nickname )
+	while [ $rn == $( cat ./nickname ) ]; do rn=$( randline ./nicks/$1 ); done
 	echo $rn
 }
 
@@ -29,18 +28,16 @@ case $1 in
 	;;
 	JOIN)
 		if [ "$extnick" == $( cat ./nickname ) ]; then
-			sleep $(( RANDOM%3 )) && while [ -e ./f/start_names ]; do sleep 1; done
-			echo -n $chan > ./f/start_names && irc "NAMES $chan"
-			until [ -e ./f/end_names ]; do sleep 1; done
-			sed -e 's/ /\n/g' -e 's/\(@\|%\|&\|+\)//g' ./f/names > ./nicks/$chan
-			rm ./f/end_names && rm ./f/names && rm ./f/start_names
+			[ -e ./nicks/names_$chan ] && rm ./nicks/names_$chan
+			irc "NAMES $chan"
 		else
 			wn="$undl${colr}4,8/!\\$undl $undl${colr}1Warning$undl: "
 			case $extnick in
-				trewdys) privmsg $chan "ウホッ イイ男" ;;
-				luminodrake) privmsg $chan $wn"Cow Detected" && ( sleep 1 && privmsg $chan moo ) & ;;
+				trewdys) msg 0 $chan "ウホッ イイ男" ;;
+				luminodrake) msg 0 $chan $wn"Cow Detected" && ( sleep 1 && msg 0 $chan moo ) & ;;
 			esac
-			chan_action $chan "welcomes $extnick with $( randline ./c/cookies ) cookies"
+			msg 1 $chan "welcomes $extnick with $( randline ./c/cookies ) cookies"
+
 			fifline="$( tail -n 15 ./logs/$chan )"
 			if [[ $( grep $extnick <<< "$fifline" ) ]]; then
 				lasline="$( grep -n $extnick <<< "$fifline" | cut -d':' -f1 | tail -n 1 )"
@@ -48,6 +45,7 @@ case $1 in
 			else
 				irc "$( sed -e "s/^/PRIVMSG $extnick :/" -e 's/$/\n/' <<< "$fifline" )"
 			fi
+
 			[[ $( grep $extnick ./nicks/$chan ) ]] || echo $extnick >> ./nicks/$chan
 		fi
 		log $chan "-> $extnick"
@@ -62,12 +60,12 @@ case $1 in
 		case ${3:1:1} in
 			!)
 				case ${3:2} in
-					slap) chan_action $chan "slaps ${4:-$( randnick $chan )} with $( randline ./c/give )" ;;
-					give) chan_action $chan "gives ${4:-$extnick} $( randline ./c/give )" ;;
-					dice) chan_action $chan "rolls a... $((RANDOM%${4:-6}+1))" ;;
+					slap) msg 1 $chan "slaps ${4:-$( randnick $chan )} with $( randline ./c/give )" ;;
+					give) msg 1 $chan "gives ${4:-$extnick} $( randline ./c/give )" ;;
+					dice) msg 1 $chan "rolls a... $((RANDOM%${4:-6}+1))" ;;
 					kill) irc "KICK $chan $extnick :You asked for it"$'\n'"INVITE $extnick $chan" ;;
 					roulette)
-						chan_action $chan "loads the gun..."
+						msg 1 $chan "loads the gun..."
 						sleep 1 && nn=$( randnick $chan )
 						irc "KICK $chan $nn :was shot!"$'\n'"INVITE $nn $chan"
 					;;
@@ -75,14 +73,14 @@ case $1 in
 						if [ -z "$4" ]; then
 							lc=$((RANDOM%10-3))
 							case $lc in #You Have a Total of${colr}4 0$colr lolis.
-								0) chan_action $chan "Shouts: $extnick is a LOSER and PEDO, I won't give you any Loli." ;;
-								[2-4]) chan_action $chan "gives${colr}4 $lc$colr Lolis to $extnick." ;;
-								[5-6]) privmsg $chan "YOU GOT${colr}4 $lc!!!$colr Lolis O_O You Really are a SUPER PEDO!!!" ;;
-								*1) chan_action $chan "gives a Loli to $extnick. Then takes it away." ;;
-								-*) chan_action $chan "takes away${colr}4 ${lc#-}$colr Lolis from $extnick." ;;
+								0) msg 1 $chan "Shouts: $extnick is a LOSER and PEDO, I won't give you any Loli." ;;
+								[2-4]) msg 1 $chan "gives${colr}4 $lc$colr Lolis to $extnick." ;;
+								[5-6]) msg 0 $chan "YOU GOT${colr}4 $lc!!!$colr Lolis O_O You Really are a SUPER PEDO!!!" ;;
+								*1) msg 1 $chan "gives a Loli to $extnick. Then takes it away." ;;
+								-*) msg 1 $chan "takes away${colr}4 ${lc#-}$colr Lolis from $extnick." ;;
 							esac
 						else
-							privmsg $chan "${colr}4$4$colr Currently has${colr}4 $RANDOM$colr Lolis" # and is Ranked $colr""4#0$colr out of$colr""4 0$colr participants.
+							msg 0 $chan "${colr}4$4$colr Currently has${colr}4 $RANDOM$colr Lolis" # and is Ranked $colr""4#0$colr out of$colr""4 0$colr participants.
 						fi
 					;;
 				esac

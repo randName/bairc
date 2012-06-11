@@ -12,20 +12,14 @@ case $reply in
 	376) : ;; # end
 
 	# NAMES
-	353)
-		if [ -e ./f/start_names ] && [ "$2" == $( cat ./f/start_names ) ]; then
-			echo $2 ${3:1} ${@:4} >> ./f/names
-		else
-			echo $2 ${3:1} ${@:4} > ./f/names
-		fi
-	;;
-	366) echo $1 > ./f/end_names ;;
+	353) sed -e 's/ /\n/g' -e 's/\(@\|%\|&\|+\)//g' <<< "${3:1} ${@:4}" >> ./nicks/names_$2 ;;
+	366) mv ./nicks/names_$1 ./nicks/$1 ;;
 
 #	318) : ;;
 
 	# TOPIC
-	332) echo [$1] ${2:1} ${@:3} ;; # topic
-	333) echo [$1] $2 $3 ;; # who & time
+	332) : ;; # echo [$1] ${2:1} ${@:3} ;;
+	333) : ;; #  echo [$1] $2 $3 ;; # who & time
 
 	341) : ;; # invite (?)
 

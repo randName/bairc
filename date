@@ -1,7 +1,12 @@
 #!/bin/bash
+
+echo -n $$ > date_PID
+
 while [ true ]; do
 	sleep $(( $( date -d 2359 +%s ) - $( date +%s ) + 50 ))
+	until [ "$( date +%H%M )" == "0000" ]; do ( sleep 1 ) ; done
 	for a in ./logs/#*; do
-		( until [ "$( date +%M%S )" == "0000" ]; do sleep 1; done && echo $'\n'" - $( date +%F ) -"$'\n' >> $a ) &
+		echo "--- Day changed $( date "+%a %d %m %Y" )" >> $a
 	done
+	sleep 600
 done
