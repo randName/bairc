@@ -4,13 +4,21 @@ An IRC client/bot made in bash. Extremely versatile, but also dangerous. Take ca
 
 > ./bairc irc_server [port]
 
-v0.8
+v0.8.2
 
-c/ - customizations folder
-f/ - important files that BAIRC will use
 bairc - main file. execute this
 server - server events
 actions - irc events
 privmsg - PM events ( includes CTCP )
-nickname - Nickname that BAIRC will use. Update ./f/nickserv_pw if Nickname is registered with NickServ
+nickname - Nickname that BAIRC will use. ( See config/NickServ if Nickname is registered )
 
+logs/ - logs for channels with valid loglevels
+nicks/ - nick lists of each channel with update_names flag
+config/ - customizations folder:
+ NickServ - for NickServ and privmsg console authentication
+ autojoin - list of channels to join automatically when "join" issue through console
+ #[channel name] - channel configuration files
+  update_names # set to 1
+  loglevel # ALL|JOIN|PART|QUIT|NICK|KICK|MODE|TOPIC
+  respond_to_invites # set to 1
+  on_join(), on_part(), on_quit(), on_nick(), on_kick() handlers
