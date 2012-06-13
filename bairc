@@ -32,6 +32,7 @@ irc_parse ()
 		PING) irc "PONG $2" ;;
 		ERROR)  exec 4<&-
 			[ -e ./killed ] && rm ./killed && exit 0
+			[ -e ./date_PID ] && kill $( cat ./date_PID ) && rm ./date_PID
 			exec $BASH_SOURCE $SERVER $PORT
 		;;
 		*)
@@ -58,3 +59,4 @@ trap 'kill $( cat ./date_PID ); rm ./date_PID' EXIT
 
 irc "USER plrin 0 \* :realName"$'\n'"NICK $(nickname)"
 while read a; do irc_parse $( tr -d '\n\r' <<< "$a" ) ; done <&4
+

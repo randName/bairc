@@ -3,7 +3,7 @@ if [ "${1:1:1}" == ${ctrl[0]} ]; then
 		CLIENTINFO) msg 3 $extnick "CLIENTINFO CLIENTINFO VERSION ERRMSG PING TIME" ;;
 		VERSION) msg 3 $extnick "VERSION BAIRC v2.$RANDOM" ;;
 		ERRMSG) msg 3 $extnick "ERRMSG ERRMSG :No error" ;;
-		PING) msg 3 $extnick "PING $( date +%s )" ;;
+		PING) msg 3 $extnick "PING ${@:2}" ;;
 		TIME) msg 3 $extnick "TIME $( date )" ;;
 		DCC)
 			case $2 in
@@ -34,7 +34,7 @@ else
 			[ -z "$2" ] && helptext="Available commands: join part kill nick whoami"
 			msg 0 $extnick "$helptext"
 		;;
-		part) [ -n "$2" ] && irc "PART $2" || irc "JOIN 0" ;;
+		part) [ -n "$2" ] && irc "PART $2" ;;
 		join) [ -n "$2" ] && irc "JOIN $2" || irc "$( sed 's/^/JOIN /' ./config/autojoin )" ;;
 		kill) [ "$extnick" == "$( cat ./auth )" ] && ( [ "$2" == "-r" ] && irc "QUIT :rebooting" || die "killed" ) ;;
 		nick) [ "$extnick" == "$( cat ./auth )" ] && [ -n "$2" ] && ( irc "NICK $2" ; echo -n $2 > nickname ) ;;

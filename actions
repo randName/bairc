@@ -1,4 +1,15 @@
-[ "$2" == "$(nickname)" ] && echo $@
+if [ "$2" == "$(nickname)" ]; then
+	case $1 in
+		MODE) : ;;
+		NOTICE)
+			if [ "$extnick" == "NickServ" -a "${*:4:3}" == 'nickname is registered' ]; then
+				[ -e ./config/NickServ ] && msg 0 NickServ "IDENTIFY $(sed '/#/d;/^$/d;q' ./config/NickServ)" || die "nickname is registered"
+			fi
+		;;
+		PRIVMSG) message="${3:1} ${@:4}" ; shift 2; ( . ./privmsg ) ;;
+		*) echo $@ ;;
+	esac
+else
 
 chans=${2,,} # strip to lowercase
 case $1 in
@@ -55,24 +66,16 @@ case $1 in
 		[ $respond_to_invite -ne 0 ] && ( sleep $respond_to_invite && irc "JOIN $3" ) &
 	;;
 	NOTICE)
-		if [ "$2" == "$(nickname)" ]; then
-			if [ "$extnick" == "NickServ" -a "${*:4:3}" == 'nickname is registered' ]; then
-				[ -e ./config/NickServ ] && msg 0 NickServ "IDENTIFY $(sed '/#/d;/^$/d;q' ./config/NickServ)" || die "nickname is registered"
-			fi
-		else
-			[[ $( defined on_notice ) ]] && ( on_notice $chan $extnick ${3:1} ${@:4} )
-			tolog="Notice ($chan): ${3:1} ${@:4}"
-		fi
+		[[ $( defined on_notice ) ]] && ( on_notice $chan $extnick ${3:1} ${@:4} )
+		tolog="Notice ($chan): ${3:1} ${@:4}"
 	;;
 	PRIVMSG)
+		[[ $( defined on_msg ) ]] && ( on_msg $chan $extnick ${3:1} ${@:4} )
+		
 		message="${3:1} ${@:4}"
-		if [ "$2" == "$(nickname)" ]; then
-			shift 2; ( . ./privmsg )
-		else
-			[[ $( defined on_msg ) ]] && ( on_msg $chan $extnick ${3:1} ${@:4} )
-			[[ "$message" =~ ${ctrl[0]}ACTION ]] && out="${extnick}${message:7}" || out="<${extnick}> $message"
-			tolog="$( sed -e "s/\(${ctrl[0]}\|${ctrl[1]}\|${ctrl[3]}\)//g; s/${ctrl[2]}[0-9,]*//g;" -e 's/[[:cntrl:]]//g' <<< "$out" )"
-		fi
+		[[ "$message" =~ ${ctrl[0]}ACTION ]] && out="${extnick}${message:7}" || out="<${extnick}> $message"
+
+		tolog="$( sed -e "s/\(${ctrl[0]}\|${ctrl[1]}\|${ctrl[3]}\)//g; s/${ctrl[2]}[0-9,]*//g;" -e 's/[[:cntrl:]]//g' <<< "$out" )"
 	;;
 	*) echo $@ ;;
 esac
@@ -81,3 +84,4 @@ esac
 [[ $( grep "\(${1}\|ALL\)" <<< "$loglevel" ) ]] && [ -n "$tolog" ] && log $chan "$tolog"
 
 ); done
+fi
