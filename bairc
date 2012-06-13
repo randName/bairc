@@ -1,51 +1,47 @@
 #!/bin/bash -f
-
 cd $( dirname $BASH_SOURCE )
 
-#ctcp=`echo -en '\x01'`
-#bold=`echo -en '\x02'`
-#undl=`echo -en '\x1F'`
-#colr=`echo -en '\x03'` # FFF 000 008 080 F00 844 80F 880 FF0 0F0 088 0FF 00F F0F 888 CCC
-
-#		    ctcp bold colr undl
+# control chars	    ctcp bold colr undl
 ctrl=( $( echo -en '\x01 \x02 \x03 \x1F' ) )
-# FFF 000 008 080 F00 844 80F 880 FF0 0F0 088 0FF 00F F0F 888 CCC
+# colous: FFF 000 008 080 F00 844 80F 880 FF0 0F0 088 0FF 00F F0F 888 CCC
 
 # FUNCTIONS
 
 irc(){ echo "$@" >&4 ; }
-log(){ [[ "$1" =~ \#* ]] && echo $( date +%R ) ${@:2} >> ./logs/$1 || echo ${@:2} >> $1 ; }
+log(){ [ -n "${@:2}" ] && echo "$( date +%R ) ${@:2}" >> ./logs/$1 ; }
 
-#privmsg(){ irc "PRIVMSG $1 :${@:2}" ; }
-#ctcp_reply(){ irc "NOTICE $extnick :${ctcp}$@${ctcp}" ; }
-#chan_action(){ irc "PRIVMSG $1 :${ctcp}ACTION ${@:2}"$ctcp ; }
+die(){ touch ./killed ; irc "QUIT :$@" ; }
 
 msg()
 {
 	case $1 in
-	0) irc "PRIVMSG $2 :${@:3}" ;; # Chan MSG / PRIVMSG
-	1) irc "PRIVMSG $2 :${ctrl[0]}ACTION ${@:3}${ctrl[0]}" ;; # action msg
+	0) irc "PRIVMSG $2 :${@:3}" ;; # normal MSG / PRIVMSG
+	1) irc "PRIVMSG $2 :${ctrl[0]}ACTION ${@:3}${ctrl[0]}" ;; # /me
 	2) irc "NOTICE $2 :${@:3}" ;; # NOTICE
-	3) irc "NOTICE $2 :${ctrl[0]}${@:3}${ctrl[0]}" ;; # CTCP Reply
+	3) irc "NOTICE $2 :${ctrl[0]}${@:3}${ctrl[0]}" ;; # CTCP reply
 	esac
 }
+
+defined(){ declare -f -F $1 ; }
+
+nickname(){ [ -e ./nickname ] && cat ./nickname || die "no nick" ; }
 
 irc_parse ()
 {
 	case $1 in
 		PING) irc "PONG $2" ;;
 		ERROR)  exec 4<&-
-			[ -e ./killed ] && rm ./killed && exit 0
+			[ -e ./killed ] && ( rm ./killed ; exit 0 )
 			exec $BASH_SOURCE $SERVER $PORT
 		;;
 		*)
 			ep=$( expr index "$1" '!' )
 			if [ $ep -ne 0 ]; then
 				extnick=${1:1:(( ep-=2 ))}
-				shift && ( . ./actions ) &
+				shift; ( . ./actions ) &
 			else
 				reply=$2
-				shift 3 && ( . ./server )
+				shift 3; ( . ./server )
 			fi
 		;;
 	esac
@@ -60,5 +56,5 @@ exec 4<> /dev/tcp/$SERVER/$PORT
 ./date &
 trap 'kill $( cat ./date_PID ); rm ./date_PID' EXIT
 
-irc "USER plrin 0 \* :realName"$'\n'"NICK $( cat ./nickname )"
+irc "USER plrin 0 \* :realName"$'\n'"NICK $(nickname)"
 while read a; do irc_parse $( tr -d '\n\r' <<< "$a" ) ; done <&4
