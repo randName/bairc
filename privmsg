@@ -24,10 +24,10 @@ if [ "${1:1:1}" == ${ctrl[0]} ]; then
 	esac
 else
 	case ${1:1} in
-		auth) [ "$extnick" == "$( cat ./f/auth )" ] && ( : > ./f/auth ) || ( [ "$2" = "$( cat ./config/nickserv_pw )" ] && echo -n $extnick > ./f/auth )  ;;
+		auth) [ "$extnick" == "$( cat ./auth )" ] && ( : > ./auth ) || ( [[ $( sed -n "/^${2}$/p" ./config/NickServ ) ]] && echo -n $extnick > ./auth )  ;;
 		help)
 			case $2 in
-				kill) helptext="kill [r]: (needs auth) Kill BAIRC ( -r for restart )" ;;
+				kill) helptext="kill [-r]: (needs auth) Kill BAIRC ( -r for restart )" ;;
 				nick) helptext="nick nickname: (needs auth) Change Nickname" ;;
 				*) helptext="$2 : no such command" ;;
 			esac
@@ -36,9 +36,9 @@ else
 		;;
 		part) [ -n "$2" ] && irc "PART $2" || irc "JOIN 0" ;;
 		join) [ -n "$2" ] && irc "JOIN $2" || irc "$( sed 's/^/JOIN /' ./config/autojoin )" ;;
-		kill) [ "$extnick" == "$( cat ./f/auth )" ] && ( [ "$2" == "r" ] && irc "QUIT :rebooting" || die "killed" ) ;;
-		nick) [ "$extnick" == "$( cat ./f/auth )" ] && [ -n "$2" ] && ( irc "NICK $2" ; echo -n $2 > nickname ) ;;
-		whoami) msg 0 $extnick $( [ "$extnick" == "$( cat ./f/auth )" ] && echo root || echo $extnick ) ;;
+		kill) [ "$extnick" == "$( cat ./auth )" ] && ( [ "$2" == "-r" ] && irc "QUIT :rebooting" || die "killed" ) ;;
+		nick) [ "$extnick" == "$( cat ./auth )" ] && [ -n "$2" ] && ( irc "NICK $2" ; echo -n $2 > nickname ) ;;
+		whoami) msg 0 $extnick $( [ "$extnick" == "$( cat ./auth )" ] && echo root || echo $extnick ) ;;
 		*) echo "[$extnick] ${1:1} ${@:2}" ;;
 	esac
 fi

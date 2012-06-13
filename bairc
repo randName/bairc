@@ -10,7 +10,7 @@ ctrl=( $( echo -en '\x01 \x02 \x03 \x1F' ) )
 irc(){ echo "$@" >&4 ; }
 log(){ [ -n "${@:2}" ] && echo "$( date +%R ) ${@:2}" >> ./logs/$1 ; }
 
-die(){ touch ./killed ; irc "QUIT :$@" ; }
+die(){ touch killed ; irc "QUIT :$@" ; }
 
 msg()
 {
@@ -31,7 +31,7 @@ irc_parse ()
 	case $1 in
 		PING) irc "PONG $2" ;;
 		ERROR)  exec 4<&-
-			[ -e ./killed ] && ( rm ./killed ; exit 0 )
+			[ -e ./killed ] && rm ./killed && exit 0
 			exec $BASH_SOURCE $SERVER $PORT
 		;;
 		*)

@@ -1,3 +1,5 @@
+[ "$2" == "$(nickname)" ] && echo $@
+
 chans=${2,,} # strip to lowercase
 case $1 in
 JOIN) chans=${chans:1} ;;
@@ -6,7 +8,6 @@ esac
 
 for chan in $( echo $chans ); do (
 
-[ "$chan" == "$(nickname)" ] && echo self command $@
 loglevel=""; update_nicks=0; respond_to_invite=0;
 [ -e ./config/$chan ] && source ./config/$chan
 
@@ -39,7 +40,7 @@ case $1 in
 		tosed="/$extnick/d"; tolog="$2 was killed ${3:1} ${@:4}"
 	;;
 	MODE)
-		[[ $( defined on_mode ) ]] && ( on_mode $chan $2 ${3:1} ${@:4} )
+		[[ $( defined on_mode ) ]] && ( on_mode $chan $extnick ${@:3} )
 		tolog="mode/$chan (${@:3}) by $extnick"
 	;;
 	KICK)
@@ -56,7 +57,7 @@ case $1 in
 	NOTICE)
 		if [ "$2" == "$(nickname)" ]; then
 			if [ "$extnick" == "NickServ" -a "${*:4:3}" == 'nickname is registered' ]; then
-				[ -e ./config/NickServ ] && msg 0 NickServ "IDENTIFY $(sed '/#/d;q' ./config/NickServ)" || die "nickname is registered"
+				[ -e ./config/NickServ ] && msg 0 NickServ "IDENTIFY $(sed '/#/d;/^$/d;q' ./config/NickServ)" || die "nickname is registered"
 			fi
 		else
 			[[ $( defined on_notice ) ]] && ( on_notice $chan $extnick ${3:1} ${@:4} )
