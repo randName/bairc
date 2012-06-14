@@ -15,8 +15,8 @@ die(){ touch killed ; irc "QUIT :$@" ; }
 msg()
 {
 	case $1 in
-	0) irc "PRIVMSG $2 :${@:3}" ;; # normal MSG / PRIVMSG
-	1) irc "PRIVMSG $2 :${ctrl[0]}ACTION ${@:3}${ctrl[0]}" ;; # /me
+	0) irc "PRIVMSG $2 :${@:3}" ; log $2 "<$(nickname)> ${@:3}" ;; # normal MSG / PRIVMSG
+	1) irc "PRIVMSG $2 :${ctrl[0]}ACTION ${@:3}${ctrl[0]}" ; log $2 "$(nickname) ${@:3}" ;; # /me
 	2) irc "NOTICE $2 :${@:3}" ;; # NOTICE
 	3) irc "NOTICE $2 :${ctrl[0]}${@:3}${ctrl[0]}" ;; # CTCP reply
 	esac

@@ -6,6 +6,8 @@ case $reply in
 	042) echo $'\n'"UID: $1" ;; # unique id
 	2[5-6][1-6]) : ;; # user stats
 
+	MODE) echo "MODE $@" ;; 
+
 	# MOTD
 	375) : ;; # start
 	372) : ;; # content

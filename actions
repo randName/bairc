@@ -43,8 +43,11 @@ case $1 in
 		tosed="s/$extnick/${2:1}"; tolog="$extnick -> ${2:1}"
 	;;
 	QUIT)
+		if [ "${2:1} ${@:3}" == "*.net *.split" ]; then
+			echo "NETSPLIT $extnick ($chan)"
+		fi
 		[[ $( defined on_quit ) ]] && ( on_quit $chan $extnick ${2:1} ${@:3} )
-		tosed="/$extnick/d"; tolog="<< $extnick ${2:1} ${@:3}"
+		tosed="/$extnick/d"; tolog="<< $extnick: ${2:1} ${@:3}"
 	;;
 	KILL)
 		[[ $( defined on_kill ) ]] && ( on_kill $chan $2 ${3:1} ${@:4} )
