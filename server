@@ -15,7 +15,7 @@ case $reply in
 
 	# NAMES
 	353) sed -e 's/ /\n/g' -e 's/\(@\|%\|&\|+\)//g' <<< "${3:1} ${@:4}" >> ./nicks/names_$2 ;;
-	366) mv ./nicks/names_$1 ./nicks/$1 ;;
+	366) [ -e ./nicks/names_$1 ] && mv ./nicks/names_$1 ./nicks/$1 ;;
 
 #	318) : ;;
 
